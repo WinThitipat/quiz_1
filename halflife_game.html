@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Half-Life Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question {
+            font-size: 1.4em;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            background: rgba(74, 144, 226, 0.6);
+            border-color: #4a90e2;
+        }
+
+        .option.correct {
+            background: rgba(76, 175, 80, 0.6);
+            border-color: #4caf50;
+            animation: pulse 0.6s ease;
+        }
+
+        .option.incorrect {
+            background: rgba(244, 67, 54, 0.6);
+            border-color: #f44336;
+            animation: shake 0.6s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .score {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .explanation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .final-score {
+            text-align: center;
+            font-size: 2em;
+            margin: 30px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>⭐ Stellar Half-Life Quiz ⭐</h1>
+            <p class="subtitle">Test your knowledge about radioactive decay and stellar evolution!</p>
+        </div>
+
+        <div id="quiz" class="quiz-container">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div class="score">
+                Question <span id="currentQ">1</span> of <span id="totalQ">5</span>
+                | Score: <span id="score">0</span>/5
+            </div>
+
+            <div class="question" id="question"></div>
+            
+            <div class="options" id="options"></div>
+            
+            <div class="explanation" id="explanation"></div>
+            
+            <div style="text-align: center;">
+                <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next Question</button>
+            </div>
+        </div>
+
+        <div id="results" class="quiz-container hidden">
+            <div class="final-score">
+                🌟 Final Score: <span id="finalScore"></span>/5 🌟
+            </div>
+            <div id="finalMessage" style="text-align: center; font-size: 1.3em; margin-bottom: 30px;"></div>
+            <div style="text-align: center;">
+                <button class="btn" onclick="restartQuiz()">Take Quiz Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create animated stars
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        const questions = [
+            {
+                question: "What is half-life in the context of radioactive elements in stars?",
+                options: [
+                    "The time it takes for a star to lose half its mass",
+                    "The time for half of a radioactive sample to decay",
+                    "Half the lifetime of a star",
+                    "The time for a star to reach half its brightness"
+                ],
+                correct: 1,
+                explanation: "Half-life is the time required for half of the atoms in a radioactive sample to decay into other elements. This process is crucial in stellar nucleosynthesis."
+            },
+            {
+                question: "Which element's radioactive decay helps scientists determine the age of meteorites and the solar system?",
+                options: [
+                    "Carbon-14",
+                    "Uranium-235",
+                    "Hydrogen-1",
+                    "Iron-56"
+                ],
+                correct: 1,
+                explanation: "Uranium-235 has a half-life of about 4.5 billion years, making it perfect for dating very old objects like meteorites and determining the age of the solar system."
+            },
+            {
+                question: "In massive stars, what happens to elements with very short half-lives during supernova explosions?",
+                options: [
+                    "They become stable immediately",
+                    "They decay quickly, releasing energy and forming lighter elements",
+                    "They turn into dark matter",
+                    "They escape into space unchanged"
+                ],
+                correct: 1,
+                explanation: "Elements with short half-lives decay rapidly during supernova explosions, releasing tremendous energy and often decaying into more stable, lighter elements."
+            },
+            {
+                question: "How do scientists use radioactive decay to study stellar remnants like white dwarfs?",
+                options: [
+                    "By measuring how fast they spin",
+                    "By observing the decay of heavy elements in their atmosphere",
+                    "By counting their surface temperature",
+                    "By measuring their gravitational pull"
+                ],
+                correct: 1,
+                explanation: "Scientists observe the radioactive decay of heavy elements in white dwarf atmospheres to understand their composition, age, and the nuclear processes that occurred in their parent stars."
+            },
+            {
+                question: "What role does the half-life of Carbon-14 play in understanding stellar evolution?",
+                options: [
+                    "It helps date recent stellar explosions and cosmic events",
+                    "It powers nuclear fusion in stars",
+                    "It determines a star's color",
+                    "It controls stellar rotation"
+                ],
+                correct: 0,
+                explanation: "Carbon-14's half-life of ~5,730 years makes it useful for dating relatively recent cosmic events like nearby supernova remnants and understanding recent stellar activity."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedAnswer = null;
+
+        function initQuiz() {
+            createStars();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('question').textContent = q.question;
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('totalQ').textContent = questions.length;
+            document.getElementById('score').textContent = score;
+            
+            const optionsEl = document.getElementById('options');
+            optionsEl.innerHTML = '';
+            
+            q.options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.textContent = option;
+                div.onclick = () => selectAnswer(index, div);
+                optionsEl.appendChild(div);
+            });
+            
+            document.getElementById('explanation').classList.remove('show');
+            document.getElementById('nextBtn').disabled = true;
+            selectedAnswer = null;
+            
+            updateProgress();
+        }
+
+        function selectAnswer(index, element) {
+            if (selectedAnswer !== null) return;
+            
+            selectedAnswer = index;
+            const options = document.querySelectorAll('.option');
+            const correct = questions[currentQuestion].correct;
+            
+            options.forEach((opt, i) => {
+                if (i === correct) {
+                    opt.classList.add('correct');
+                } else if (i === index && i !== correct) {
+                    opt.classList.add('incorrect');
+                }
+                opt.onclick = null;
+            });
+            
+            if (index === correct) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+            
+            document.getElementById('explanation').textContent = questions[currentQuestion].explanation;
+            document.getElementById('explanation').classList.add('show');
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function showResults() {
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = score;
+            
+            let message = '';
+            if (score === 5) {
+                message = "🎉 Perfect! You're a stellar scientist! 🎉";
+            } else if (score >= 3) {
+                message = "⭐ Great job! You know your stellar physics! ⭐";
+            } else {
+                message = "🌟 Keep learning about the amazing universe! 🌟";
+            }
+            
+            document.getElementById('finalMessage').textContent = message;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            selectedAnswer = null;
+            document.getElementById('quiz').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            showQuestion();
+        }
+
+        // Initialize the quiz when page loads
+        initQuiz();
+    </script>
+</body>
+</html>
